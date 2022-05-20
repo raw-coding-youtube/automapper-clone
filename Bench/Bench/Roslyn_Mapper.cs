@@ -71,7 +71,10 @@ public class Roslyn_Mapper
                 // MetadataReference.CreateFromFile(Path.Combine(baseAssemblyPath, "System.Runtime.dll")),
                 MetadataReference.CreateFromFile(typeof(Roslyn_Mapper).Assembly.Location),
             },
-            options: new(OutputKind.DynamicallyLinkedLibrary)
+            options: new(
+                OutputKind.DynamicallyLinkedLibrary,
+                optimizationLevel: OptimizationLevel.Release
+            )
         );
 
         using var ms = new MemoryStream();
@@ -92,14 +95,9 @@ public class Roslyn_Mapper
         var method = assembly.GetType("Gen.Mapper")
             .GetMethod("Map", BindingFlags.Public | BindingFlags.Static, new[] { fromType });
 
-        return Jeeeeez<T>(method, fromType);
-    }
-
-    private static Func<object, T> Jeeeeez<T>(MethodInfo methodInfo, Type fromType)
-    {
         var param = Expression.Parameter(typeof(object));
         var cast = Expression.Convert(param, fromType);
-        var body = Expression.Call(methodInfo, cast);
+        var body = Expression.Call(method, cast);
         return Expression.Lambda<Func<object, T>>(body, false, param).Compile();
     }
 }
